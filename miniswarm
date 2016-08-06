@@ -18,6 +18,25 @@ create_instance() {
   docker-machine create -d virtualbox "$1" 2>&1 | line_prefix "$1"
 }
 
+wait_for_command() {
+    local command="$1"
+    local retry=${2:-60}
+    local sleep_time=${3:-1}
+
+    local tries=0
+    while (( tries < retry ));do
+        tries=$((tries+1))
+        if eval "$command";then
+            echo
+            return 0
+        fi
+        echo -n '.'
+        sleep "$sleep_time"
+    done
+    ((tries > 1)) && echo "TIMED OUT"
+    return 1
+}
+
 set_wanted_instances() {
   wanted_managers=""
   wanted_workers=""
@@ -36,14 +55,10 @@ create_instances() {
       create_instance "$i"
     else
       create_instance "$i" &
-      # virtualbox hiccups on me if I start too many at the same time
-      #sleep 1
     fi
   done
   for i in $(missing_instances "$wanted_workers" "ms-worker"); do
       create_instance "$i" &
-      # virtualbox hiccups on me if I start too many at the same time
-      #sleep 1
   done
   wait
 }
@@ -56,13 +71,24 @@ delete_instances() {
   # Gracefully leave cluster
   if [[ ${1:-""} != "--force" ]]; then
     for i in $to_delete; do
-      leave_cluster "$i" &
+      delete_from_cluster "$i" &
     done
     wait
-    docker-machine ssh ms-manager0 docker node update $to_delete
-    docker-machine ssh ms-manager0 docker node rm $to_delete
+    #docker-machine ssh ms-manager0 docker node rm $to_delete
   fi
   docker-machine rm -y $to_delete
+}
+
+delete_from_cluster() {
+  leave_cluster "$1"
+  # In case there are multiple matches for a given name
+  ids=$(docker-machine ssh ms-manager0 docker node ls -qf name="$1")
+  for id in $ids; do
+    # Wait for it to be in down state so we can remove
+    info "Waiting for node id=$id to be in a down state"
+    wait_for_command "docker-machine ssh ms-manager0 docker node ls -f id=$id |grep -q Down"
+    docker-machine ssh ms-manager0 docker node rm $id > /dev/null
+  done
 }
 
 stop_instances() {
