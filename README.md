@@ -3,7 +3,7 @@
 ## What is Miniswarm?
 Miniswarm is a tool that intends to make testing a [Docker swarm](https://docs.docker.com/engine/swarm/) cluster locally as easy as possible. miniswarm was inspired by [minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters.
 
-## Prereq
+## Prerequisites
 
 * Docker >= 1.12
 * docker-machine >= 0.7.0
