@@ -37,19 +37,46 @@ wait_for_command() {
     return 1
 }
 
+generate_names() {
+  local name=$1
+  local count=$2
+  for ((i=0; i<count; i++)); do
+    echo "${name}${i}"
+  done
+}
+
+extra_instances() {
+  local filter=$1
+  shift
+  local wanted_instances=( ${@+"$@"} )
+  got_instances=$(docker-machine ls -q | grep "$filter" | sort)
+  comm -13 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
+}
+
+missing_instances() {
+  local filter=$1
+  shift
+  local wanted_instances=( ${@+"$@"} )
+  got_instances=$(docker-machine ls -q | grep "$filter" | sort)
+  comm -23 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
+}
+
 set_wanted_instances() {
-  wanted_managers=""
-  wanted_workers=""
-  for ((i=0; i<num_managers; i++)); do
-    wanted_managers="${wanted_managers}ms-manager${i} "
-  done
-  for ((i=0; i<num_workers; i++)); do
-    wanted_workers="${wanted_workers}ms-worker${i} "
-  done
-  missing_managers=$(missing_instances "$wanted_managers" "ms-manager")
-  missing_workers=$(missing_instances "$wanted_workers" "ms-worker")
-  extra_managers=$(extra_instances "$wanted_workers" "ms-worker")
-  extra_workers=$(extra_instances "$wanted_managers" "ms-manager")
+  wanted_managers=( $(generate_names 'ms-manager' "$num_managers") )
+  wanted_workers=( $(generate_names 'ms-worker' "$num_workers") )
+  missing_managers=( $(missing_instances "ms-manager" "${wanted_managers[@]+"${wanted_managers[@]}"}") )
+  missing_workers=( $(missing_instances "ms-worker" "${wanted_workers[@]+"${wanted_workers[@]}"}") )
+  missing_instances=( "${missing_managers[@]+"${missing_managers[@]}"}" "${missing_workers[@]+"${missing_workers[@]}"}" )
+  extra_managers=( $(extra_instances "ms-manager" "${wanted_managers[@]+"${wanted_managers[@]}"}") )
+  extra_workers=( $(extra_instances "ms-worker" "${wanted_workers[@]+"${wanted_workers[@]}"}") )
+  extra_instances=( "${extra_managers[@]+"${extra_managers[@]}"}" "${extra_workers[@]+"${extra_workers[@]}"}" )
+  echo "extra" "${extra_managers[@]+"${extra_managers[@]}"}"
+  echo "extra" "${extra_workers[@]+"${extra_workers[@]}"}"
+  echo "missing" "${missing_workers[@]+"${missing_workers[@]}"}"
+  echo "missing" "${missing_managers[@]+"${missing_managers[@]}"}"
+  echo "missing_total" "${missing_instances[@]+"${missing_instances[@]}"}"
+  echo "extra_total" "${extra_instances[@]+"${extra_instances[@]}"}"
+  exit 1
 }
 
 create_instances() {
@@ -151,20 +178,6 @@ scale_cluster() {
   delete_instances
   start_instances
   create_cluster
-}
-
-extra_instances() {
-  local wanted_instances=$1
-  local filter=$2
-  got_instances=$(docker-machine ls -q | grep "$filter" | sort)
-  comm -13 <(tr ' ' '\n' <<<"$wanted_instances" | sort) <(echo -e "$got_instances" | sort) | tr '\n' ' '
-}
-
-missing_instances() {
-  local wanted_instances=$1
-  local filter=$2
-  got_instances=$(docker-machine ls -q | grep "$filter" | sort)
-  comm -23 <(tr ' ' '\n' <<<"$wanted_instances" | sort) <(echo -e "$got_instances" | sort) | tr '\n' ' '
 }
 
 create_cluster() {
