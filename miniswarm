@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -e
 
 info() {
   echo "INFO: $*"
@@ -47,16 +47,14 @@ generate_names() {
 
 extra_instances() {
   local filter=$1
-  shift
-  local wanted_instances=( ${@+"$@"} )
+  local wanted_instances=( ${@:2} )
   got_instances=$(docker-machine ls -q | grep "$filter" | sort)
   comm -13 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
 }
 
 missing_instances() {
   local filter=$1
-  shift
-  local wanted_instances=( ${@+"$@"} )
+  local wanted_instances=( ${@:2} )
   got_instances=$(docker-machine ls -q | grep "$filter" | sort)
   comm -23 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
 }
@@ -64,53 +62,42 @@ missing_instances() {
 set_wanted_instances() {
   wanted_managers=( $(generate_names 'ms-manager' "$num_managers") )
   wanted_workers=( $(generate_names 'ms-worker' "$num_workers") )
-  missing_managers=( $(missing_instances "ms-manager" "${wanted_managers[@]+"${wanted_managers[@]}"}") )
-  missing_workers=( $(missing_instances "ms-worker" "${wanted_workers[@]+"${wanted_workers[@]}"}") )
-  missing_instances=( "${missing_managers[@]+"${missing_managers[@]}"}" "${missing_workers[@]+"${missing_workers[@]}"}" )
-  extra_managers=( $(extra_instances "ms-manager" "${wanted_managers[@]+"${wanted_managers[@]}"}") )
-  extra_workers=( $(extra_instances "ms-worker" "${wanted_workers[@]+"${wanted_workers[@]}"}") )
-  extra_instances=( "${extra_managers[@]+"${extra_managers[@]}"}" "${extra_workers[@]+"${extra_workers[@]}"}" )
-  echo "extra" "${extra_managers[@]+"${extra_managers[@]}"}"
-  echo "extra" "${extra_workers[@]+"${extra_workers[@]}"}"
-  echo "missing" "${missing_workers[@]+"${missing_workers[@]}"}"
-  echo "missing" "${missing_managers[@]+"${missing_managers[@]}"}"
-  echo "missing_total" "${missing_instances[@]+"${missing_instances[@]}"}"
-  echo "extra_total" "${extra_instances[@]+"${extra_instances[@]}"}"
-  exit 1
+
+  missing_managers=( $(missing_instances "ms-manager" "${wanted_managers[@]}") )
+  missing_workers=( $(missing_instances "ms-worker" "${wanted_workers[@]}") )
+  missing_instances=( "${missing_managers[@]}" "${missing_workers[@]}" )
+
+  extra_managers=( $(extra_instances "ms-manager" "${wanted_managers[@]}") )
+  extra_workers=( $(extra_instances "ms-worker" "${wanted_workers[@]}") )
+  extra_instances=( "${extra_managers[@]}" "${extra_workers[@]}" )
 }
 
 create_instances() {
-  for i in $missing_managers; do
+  for i in "${missing_instances[@]}"; do
     # If boot2docker.iso doesn't exist, then run fist command serially to get it
     if ! [[ -e ~/.docker/machine/cache/boot2docker.iso ]]; then
       create_instance "$i"
     else
       create_instance "$i" &
       # VirtualBox throws errors sometimes when too many machines are launched in parallel
-      sleep 2
+      sleep 3
     fi
-  done
-  for i in $missing_workers; do
-      create_instance "$i" &
-      # VirtualBox throws errors sometimes when too many machines are launched in parallel
-      sleep 2
   done
   wait
 }
 
 delete_instances() {
-  to_delete="$extra_managers $extra_workers"
-  if [[ $to_delete == " " ]]; then
+  if [[ ${#extra_instances[@]} -eq 0 ]]; then
     return 0
   fi
   # Gracefully leave cluster
   if [[ ${1:-""} != "--force" ]]; then
-    for i in $to_delete; do
+    for i in "${extra_instances[@]}"; do
       delete_from_cluster "$i" &
     done
     wait
   fi
-  docker-machine rm -y $to_delete
+  docker-machine rm -y "${extra_instances[@]}"
 }
 
 delete_from_cluster() {
@@ -160,20 +147,18 @@ start_instance() {
 }
 
 start_instances() {
-  to_start=$(docker-machine ls -q --filter state=Stopped | grep "ms-\(worker\|manager\)[0-9][0-9]*" || true)
-  for i in $to_start; do
+  to_start=( $(docker-machine ls -q --filter state=Stopped | grep "ms-\(worker\|manager\)[0-9][0-9]*" || true) )
+  info "Starting: ${to_start[*]}"
+  for i in "${to_start[@]}"; do
     start_instance "$i" | line_prefix "$i" &
-    #docker-machine start "$i" > /dev/null &
-    #docker-machine regenerate-certs -f "$i" > /dev/null &
   done
   wait
-  #docker-machine start $(docker-machine ls -q | grep "ms-\(worker\|manager\)[0-9][0-9]*")
 }
 
 scale_cluster() {
   set_wanted_instances
-  info "Creating: $missing_managers $missing_workers"
-  info "Deleting: $extra_managers $extra_workers"
+  info "Creating: ${missing_instances[*]}"
+  info "Deleting: ${extra_instances[*]}"
   create_instances
   delete_instances
   start_instances
@@ -184,10 +169,10 @@ create_cluster() {
   lookup_and_set_manager_ip
   init_cluster
   lookup_and_set_tokens
-  for i in $wanted_managers; do
+  for i in "${wanted_managers[@]}"; do
       join_cluster "$i" "$manager_token" &
   done
-  for i in $wanted_workers; do
+  for i in "${wanted_workers[@]}"; do
       join_cluster "$i" "$worker_token" &
   done
   wait
@@ -215,7 +200,6 @@ leave_cluster() {
 
 cluster_is_initialized() {
   docker-machine ssh ms-manager0 docker node ls > /dev/null 2>&1
-  #docker-machine ssh ms-manager0 docker node ls
 }
 
 init_cluster() {
@@ -247,6 +231,8 @@ deploy_swarm_visualizer() {
   fi
   docker run -it -d --name swarm_visualizer -p 5000:5000 -e HOST="$manager_ip" -e PORT=5000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
   )
+  # Wait for it to come up
+  wait_for_command "curl -s http://${manager_ip}:5000 -o /dev/null"
 }
 
 cmd_start() {
@@ -263,8 +249,6 @@ cmd_vis() {
   if [[ ${1:-""} == "--url" ]]; then
     echo "$url"
   else
-    # FIXME: add sleep
-    wait_for_command "curl -s $url -o /dev/null"
     info "Launching browser with URL: $url"
     xdg-open "$url"
   fi
@@ -307,7 +291,7 @@ cmd_delete() {
   num_managers=0
   num_workers=0
   set_wanted_instances
-  info "Deleting: $extra_managers $extra_workers"
+  info "Deleting: ${extra_instances[*]}"
   delete_instances --force
 }
 
@@ -318,7 +302,6 @@ cmd_service() {
   if [[ ${2:-""} == "--url" ]]; then
     echo "$url"
   else
-    wait_for_command "curl -s $url -o /dev/null"
     info "Launching browser with URL: $url"
     xdg-open "$url"
   fi
