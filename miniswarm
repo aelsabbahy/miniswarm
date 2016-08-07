@@ -207,15 +207,16 @@ init_cluster() {
   if ! cluster_is_initialized; then
     info "Initializing cluster"
     docker-machine ssh ms-manager0 docker swarm init \
-      --advertise-addr "$manager_ip" > /dev/null
+      --advertise-addr "$manager_ip" --listen-addr "$manager_ip" > /dev/null
   fi
 }
 
 # Join the swarm cluster
 join_cluster() {
   if ! node_in_cluster "$1"; then
+    node_ip=$(docker-machine ip "$1")
     docker-machine ssh "$1" docker swarm leave --force 2> /dev/null | line_prefix "$1"
-    docker-machine ssh "$1" docker swarm join "$manager_ip" --token "$2" 2>&1 | line_prefix "$1"
+    docker-machine ssh "$1" docker swarm join "$manager_ip" --listen-addr "$node_ip" --token "$2" 2>&1 | line_prefix "$1"
   fi
 }
 
@@ -379,6 +380,8 @@ cmd_delete() {
 
 cmd_service() {
   lookup_and_set_manager_ip
+  (
+  eval "$(docker-machine env ms-manager0)"
   port=$(docker service inspect --format '{{(index .Endpoint.Ports 0).PublishedPort}}' "$1")
   url="http://${manager_ip}:${port}"
   if [[ ${2:-""} == "--url" ]]; then
@@ -387,6 +390,40 @@ cmd_service() {
     info "Launching browser with URL: $url"
     open_url "$url"
   fi
+  )
+}
+
+# View healthchecks of service
+cmd_health() {
+  while read line; do
+    if [[ $2 != "-a" ]]; then
+      grep -q 'Running' <<<$line || continue
+    fi
+    node=$(grep -o 'ms-[^0-9][^0-9]*[0-9]*' <<<$line || true)
+    name=$(grep -o "$1\.[0-9][0-9]*" <<<$line || true)
+    id=$(cut -d ' ' -f 1 <<<$line || true)
+    (
+    # docker-machine ssh doesn't like the quotes in docker inspect -f
+    eval "$(docker-machine env "$node")"
+    docker inspect -f '{{ range .State.Health.Log }}{{ println "======\nStart:" .Start "\n======"}}{{ .Output }}{{end}}' "${name}.${id}" | line_prefix "${node} ${name}.${id}"
+    )
+  done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
+}
+
+# View logs of service
+cmd_logs() {
+  while read line; do
+    node=$(grep -o 'ms-[^0-9][^0-9]*[0-9]*' <<<$line || true)
+    name=$(grep -o "$1\.[0-9][0-9]*" <<<$line || true)
+    id=$(cut -d ' ' -f 1 <<<$line || true)
+    [[ $2 == "-f" ]] && opts="-f"
+    (
+    # docker-machine ssh doesn't like the quotes in docker inspect -f
+    eval "$(docker-machine env "$node")"
+    docker logs $opts "${name}.${id}" | line_prefix "${node}=>${name}.${id}"
+    ) &
+  done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
+  wait
 }
 
 main() {
@@ -408,6 +445,12 @@ main() {
       ;;
     service)
       cmd_service "${@:2}"
+      ;;
+    health)
+      cmd_health "${@:2}"
+      ;;
+    logs)
+      cmd_logs "${@:2}"
       ;;
     ""|help)
       print_help
