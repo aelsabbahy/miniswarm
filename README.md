@@ -153,3 +153,7 @@ Because it's a quick hack I did over the weekend.. or I suck.. maybe both?
 ## I tried to use it and got an error
 
 Open an issue, create a pull request.. contribute :)
+
+## Why is the CLI parsing so bad?
+
+See the last two questions.
