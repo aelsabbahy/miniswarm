@@ -79,6 +79,14 @@ missing_instances() {
   comm -23 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
 }
 
+open_url() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    open "$1"
+  else
+    xdg-open "$1"
+  fi
+}
+
 ################
 # Docker helpers
 ################
@@ -113,7 +121,7 @@ leave_cluster() {
     # Give it a few sec to drain
     # FIXME: There's probably a better way to do this
     sleep 3
-    docker-machine ssh "$1" docker swarm leave 2>&1 | line_prefix "$1"
+    docker-machine ssh "$1" docker swarm leave --force 2>&1 | line_prefix "$1"
   fi
 }
 
@@ -166,7 +174,7 @@ stop_instances() {
   done
   wait
   # Kill the leader
-  #leave_cluster "ms-manager0" | line_prefix "ms-manager0";
+  leave_cluster "ms-manager0" | line_prefix "ms-manager0";
   docker-machine stop "ms-manager0" | line_prefix "ms-manager0";
 }
 
@@ -196,11 +204,11 @@ cluster_is_initialized() {
 
 # Initialize the cluster
 init_cluster() {
-  #if ! cluster_is_initialized; then
+  if ! cluster_is_initialized; then
     info "Initializing cluster"
-    docker-machine ssh ms-manager0 docker swarm init --force-new-cluster \
+    docker-machine ssh ms-manager0 docker swarm init \
       --advertise-addr "$manager_ip" > /dev/null
-  #fi
+  fi
 }
 
 # Join the swarm cluster
@@ -264,6 +272,15 @@ deploy_swarm_visualizer() {
   wait_for_command "curl -s http://${manager_ip}:5000 -o /dev/null"
 }
 
+# Remove all services
+remove_services() {
+  info 'Removing deployed services'
+  (
+  eval "$(docker-machine env ms-manager0)"
+  docker service rm $(docker service ls -q)
+  )
+}
+
 ##############
 # CLI commands
 ##############
@@ -311,7 +328,7 @@ cmd_vis() {
     echo "$url"
   else
     info "Launching browser with URL: $url"
-    xdg-open "$url"
+    open_url "$url"
   fi
 }
 
@@ -345,6 +362,9 @@ cmd_scale() {
 
 cmd_stop() {
   info "Stopping miniswarm"
+  # FIXME: Stopping and starting a cluster causes services to hang
+  # for now removing all services until this is fixed
+  remove_services
   stop_instances
 }
 
@@ -365,7 +385,7 @@ cmd_service() {
     echo "$url"
   else
     info "Launching browser with URL: $url"
-    xdg-open "$url"
+    open_url "$url"
   fi
 }
 
