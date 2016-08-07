@@ -115,10 +115,35 @@ miniswarm service vote --url
 
 **View the logs**
 ```
-miniswarm logs redis
+miniswarm logs vote
+
+# Tail the log file (-f has to be at the end for now)
+miniswarm logs redis -f
 ```
 
 **Delete our swarm cluster**
 ```
 miniswarm delete
 ```
+
+# FAQ
+## Why the #$@^%$ is this written in Bash?
+
+Two reasons:
+
+1. I though it was going to be ~100 lines of bash, I was wrong.. very wrong :(.
+2. I want users to be able to look at this script and see all the commands needed to set up a swarm cluster.
+  * Go would be great for this tool, especially by leveraging the docker packages directly, but then the tool will be more of a blackbox to new users
+
+## Why did you use Goss for healthchecks?
+Mostly shameless self-promotion, and while we're on the topic, check out:
+* [Goss](https://github.com/aelsabbahy/goss) - Project page
+* [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - On Using Goss with docker healthchecks and Kubernetes
+
+## Why does this suck?
+
+Because it's a quick hack I did over the weekend.. or I suck.. maybe both?
+
+## I tried to use it and got an error
+
+Open an issue, create a pull request.. contribute :)

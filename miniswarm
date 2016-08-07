@@ -293,11 +293,13 @@ print_help() {
   echo -e " start  - start miniswarm cluster"
   echo -e " stop   - stop miniswarm cluster"
   echo -e " scale  - scale miniswarm cluster"
-  echo -e " delete - scale miniswarm cluster"
+  echo -e " delete - delete miniswarm cluster"
   echo -e "\nCluster helper commands:"
   echo -e " vis     - Start a cluster visualization GUI"
   echo -e " service - Open service url"
-  echo -e "\nCommand Options:"
+  echo -e " health  - View the health of a service"
+  echo -e " logs    - View the logs of a service"
+  echo -e "\nCommand Options/Examples:"
   echo -e "\nstart/scale Options:"
   echo -e "You can pass in either one or two arguments to configure the size of the cluster"
   echo -e "If one argument (N) is passed in, we launch 1 manager and N-1 workers"
@@ -310,6 +312,12 @@ print_help() {
   echo -e "$script_name scale 2"
   echo -e "\n# Start previously stopped cluster, or if there isn't one start a 1 manager cluster"
   echo -e "$script_name start"
+  echo -e "\nhealth options:"
+  echo -e "$script_name health SERVICE [-a]"
+  echo -e "-a - Print health of all tasks of a service, including exited ones"
+  echo -e "\nlogs options:"
+  echo -e "$script_name logs SERVICE [-f]"
+  echo -e "-f - Tail the logs of the service"
 }
 
 # Same as scale, but with connection instructions at the end
@@ -420,7 +428,7 @@ cmd_logs() {
     (
     # docker-machine ssh doesn't like the quotes in docker inspect -f
     eval "$(docker-machine env "$node")"
-    docker logs $opts "${name}.${id}" | line_prefix "${node}=>${name}.${id}"
+    docker logs $opts "${name}.${id}" 2>&1 | line_prefix "${node} ${name}.${id}"
     ) &
   done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
   wait

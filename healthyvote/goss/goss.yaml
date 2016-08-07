@@ -1,0 +1,11 @@
+dns:
+  redis:
+    resolveable: true
+addr:
+  tcp://redis:6379:
+    title: Redis backend is reachable
+    meta:
+      remedy.1: Deploy redis service if you haven't already
+      remedy.2: ctrl-alt-delete
+      remedy.3: take a nap aka human ctrl-alt-delete
+    reachable: true
