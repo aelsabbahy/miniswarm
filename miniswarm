@@ -41,30 +41,38 @@ set_wanted_instances() {
   wanted_managers=""
   wanted_workers=""
   for ((i=0; i<num_managers; i++)); do
-    wanted_managers="${wanted_managers}ms-manager${i}\n"
+    wanted_managers="${wanted_managers}ms-manager${i} "
   done
   for ((i=0; i<num_workers; i++)); do
-    wanted_workers="${wanted_workers}ms-worker${i}\n"
+    wanted_workers="${wanted_workers}ms-worker${i} "
   done
+  missing_managers=$(missing_instances "$wanted_managers" "ms-manager")
+  missing_workers=$(missing_instances "$wanted_workers" "ms-worker")
+  extra_managers=$(extra_instances "$wanted_workers" "ms-worker")
+  extra_workers=$(extra_instances "$wanted_managers" "ms-manager")
 }
 
 create_instances() {
-  for i in $(missing_instances "$wanted_managers" "ms-manager"); do
+  for i in $missing_managers; do
     # If boot2docker.iso doesn't exist, then run fist command serially to get it
     if ! [[ -e ~/.docker/machine/cache/boot2docker.iso ]]; then
       create_instance "$i"
     else
       create_instance "$i" &
+      # VirtualBox throws errors sometimes when too many machines are launched in parallel
+      sleep 2
     fi
   done
-  for i in $(missing_instances "$wanted_workers" "ms-worker"); do
+  for i in $missing_workers; do
       create_instance "$i" &
+      # VirtualBox throws errors sometimes when too many machines are launched in parallel
+      sleep 2
   done
   wait
 }
 
 delete_instances() {
-  to_delete="$(extra_instances "$wanted_workers" "ms-worker") $(extra_instances "$wanted_managers" "ms-manager")"
+  to_delete="$extra_managers $extra_workers"
   if [[ $to_delete == " " ]]; then
     return 0
   fi
@@ -74,7 +82,6 @@ delete_instances() {
       delete_from_cluster "$i" &
     done
     wait
-    #docker-machine ssh ms-manager0 docker node rm $to_delete
   fi
   docker-machine rm -y $to_delete
 }
@@ -92,12 +99,45 @@ delete_from_cluster() {
 }
 
 stop_instances() {
-  docker-machine stop $(docker-machine ls -q | grep "ms-\(worker\|manager\)[0-9][0-9]*")
+  # Cluster gets out of wack when IP addresses change
+  # remove workers
+  for i in $(docker-machine ls -q | grep "ms-worker[0-9][0-9]*"); do
+    info "Stopping instance: $i"
+    {
+      delete_from_cluster "$i" | line_prefix "$i";
+      docker-machine stop "$i" | line_prefix "$i";
+    } &
+  done
+  wait
+  # Kill the masters
+  for i in $(docker-machine ls -q | grep "ms-manager[0-9][0-9]*"); do
+    [[ $i == "ms-manager0" ]] && continue
+    info "Stopping instance: $i"
+    {
+      leave_cluster "$i" | line_prefix "$i";
+      docker-machine stop "$i" | line_prefix "$i";
+    } &
+  done
+  wait
+  # Kill the last remaining master
+  leave_cluster "ms-manager0" | line_prefix "ms-manager0";
+  docker-machine stop "ms-manager0" | line_prefix "ms-manager0";
+}
+
+start_instance() {
+  info "Starting instance: $1"
+  docker-machine start "$1"
+  docker-machine regenerate-certs -f "$1"
+  info "Waiting for instance name=$1 to be in a running state"
+  wait_for_command "docker-machine ls --filter name=$1 --filter state=running -q | grep -q $1"
 }
 
 start_instances() {
-  for i in $(docker-machine ls -q --filter state=Stopped| grep "ms-\(worker\|manager\)[0-9][0-9]*"); do
-    docker-machine start "$i" > /dev/null &
+  to_start=$(docker-machine ls -q --filter state=Stopped | grep "ms-\(worker\|manager\)[0-9][0-9]*" || true)
+  for i in $to_start; do
+    start_instance "$i" | line_prefix "$i" &
+    #docker-machine start "$i" > /dev/null &
+    #docker-machine regenerate-certs -f "$i" > /dev/null &
   done
   wait
   #docker-machine start $(docker-machine ls -q | grep "ms-\(worker\|manager\)[0-9][0-9]*")
@@ -105,6 +145,8 @@ start_instances() {
 
 scale_cluster() {
   set_wanted_instances
+  info "Creating: $missing_managers $missing_workers"
+  info "Deleting: $extra_managers $extra_workers"
   create_instances
   delete_instances
   start_instances
@@ -115,31 +157,24 @@ extra_instances() {
   local wanted_instances=$1
   local filter=$2
   got_instances=$(docker-machine ls -q | grep "$filter" | sort)
-  comm -13 <(echo -e "$wanted_instances" | sort) <(echo -e "$got_instances" | sort)
+  comm -13 <(tr ' ' '\n' <<<"$wanted_instances" | sort) <(echo -e "$got_instances" | sort) | tr '\n' ' '
 }
 
 missing_instances() {
   local wanted_instances=$1
   local filter=$2
   got_instances=$(docker-machine ls -q | grep "$filter" | sort)
-  comm -23 <(echo -e "$wanted_instances" | sort) <(echo -e "$got_instances" | sort)
-}
-
-missing_nodes() {
-  local wanted_instances=$1
-  local filter=$2
-  got_instances=$(docker-machine ssh ms-manager0 docker node ls | tail -n +2 | cut -d ' ' -f 4 | sort)
-  comm -23 <(echo -e "$wanted_instances" | sort) <(echo -e "$got_instances" | sort)
+  comm -23 <(tr ' ' '\n' <<<"$wanted_instances" | sort) <(echo -e "$got_instances" | sort) | tr '\n' ' '
 }
 
 create_cluster() {
+  lookup_and_set_manager_ip
   init_cluster
   lookup_and_set_tokens
-  lookup_and_set_manager_ip
-  for i in $(missing_nodes "$wanted_managers" "ms-manager"); do
+  for i in $wanted_managers; do
       join_cluster "$i" "$manager_token" &
   done
-  for i in $(missing_nodes "$wanted_workers" "ms-worker"); do
+  for i in $wanted_workers; do
       join_cluster "$i" "$worker_token" &
   done
   wait
@@ -151,22 +186,28 @@ node_in_cluster() {
 
 join_cluster() {
   if ! node_in_cluster "$1"; then
+    docker-machine ssh "$1" docker swarm leave --force 2> /dev/null | line_prefix "$1"
     docker-machine ssh "$1" docker swarm join "$manager_ip" --token "$2" 2>&1 | line_prefix "$1"
   fi
 }
 
 leave_cluster() {
   if node_in_cluster "$1"; then
-    docker-machine ssh "$1" docker swarm leave 2>&1 | line_prefix "$1"
+    docker-machine ssh ms-manager0 docker node update --availability drain "$1" | line_prefix "$1"
+    # Give it a few sec to drain
+    sleep 3
+    docker-machine ssh "$1" docker swarm leave --force 2>&1 | line_prefix "$1"
   fi
 }
 
 cluster_is_initialized() {
   docker-machine ssh ms-manager0 docker node ls > /dev/null 2>&1
+  #docker-machine ssh ms-manager0 docker node ls
 }
 
 init_cluster() {
   if ! cluster_is_initialized; then
+    docker-machine ssh ms-manager0 docker swarm leave --force 2> /dev/null | line_prefix "ms-manager0"
     docker-machine ssh ms-manager0 docker swarm init \
       --advertise-addr "$manager_ip" > /dev/null
   fi
@@ -189,24 +230,18 @@ deploy_swarm_visualizer() {
     return 0
   fi
   if [[ $(docker ps -qa -f 'Status=exited' -f Name='swarm_visualizer') ]]; then
-    docker start swarm_visualizer > /dev/null
-    return 0
+    docker rm -vf swarm_visualizer > /dev/null
   fi
   docker run -it -d --name swarm_visualizer -p 5000:5000 -e HOST="$manager_ip" -e PORT=5000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
   )
 }
 
-print_connection_instructions() {
-  echo -e "\n\n"
-  info "Stack starup complete. To connect to your stack, run the following command:"
-  info 'eval $(docker-machine env ms-manager0)'
-}
-
 cmd_start() {
   info "Starting miniswarm"
   cmd_scale "$@"
-  print_connection_instructions
-  #deploy_swarm_visualizer
+  echo -e "\n\n"
+  info "Stack starup complete. To connect to your stack, run the following command:"
+  info 'eval $(docker-machine env ms-manager0)'
 }
 
 cmd_vis() {
@@ -215,6 +250,8 @@ cmd_vis() {
   if [[ ${1:-""} == "--url" ]]; then
     echo "$url"
   else
+    # FIXME: add sleep
+    wait_for_command "curl -s $url -o /dev/null"
     info "Launching browser with URL: $url"
     xdg-open "$url"
   fi
@@ -257,8 +294,23 @@ cmd_delete() {
   num_managers=0
   num_workers=0
   set_wanted_instances
+  info "Deleting: $extra_managers $extra_workers"
   delete_instances --force
 }
+
+cmd_service() {
+  lookup_and_set_manager_ip
+  port=$(docker service inspect --format '{{(index .Endpoint.Ports 0).PublishedPort}}' "$1")
+  url="http://${manager_ip}:${port}"
+  if [[ ${2:-""} == "--url" ]]; then
+    echo "$url"
+  else
+    wait_for_command "curl -s $url -o /dev/null"
+    info "Launching browser with URL: $url"
+    xdg-open "$url"
+  fi
+}
+
 
 main() {
   case "$1" in
@@ -274,8 +326,11 @@ main() {
     delete)
       cmd_delete
       ;;
-    vis)
+    vis|visualize|visualizer)
       cmd_vis "${@:2}"
+      ;;
+    service)
+      cmd_service "${@:2}"
       ;;
     *)
       err "Unknown command: $1"
