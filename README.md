@@ -1,7 +1,7 @@
-# Miniswarm - Docker swarm cluster in one command
+# Miniswarm - Docker Swarm cluster in one command
 
 ## What is Miniswarm?
-Miniswarm is a tool that intends to make creating and managing a local [Docker swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters. See FAQ below for info on managing a remote swarm.
+Miniswarm is a tool that intends to make creating and managing a local [Docker Swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters. See FAQ below for info on managing a remote Swarm cluster.
 
 The tool takes less than 10 minutes to learn, see the tutorial section below, or watch this tutorial video:
 * [Miniswarm: Docker Swarm Tutorial](https://youtu.be/in1ItGKDr98)
@@ -10,10 +10,10 @@ The tool takes less than 10 minutes to learn, see the tutorial section below, or
 
 * Docker >= 1.12
 * docker-machine >= 0.7.0
-* VirtualBox - Needed for local cluster, see FAQ for remote clusters
+* VirtualBox - Needed for local cluster, see FAQ for remote Swarm cluster
 
-## Miniswarm and Docker swarm healthchecks tutorial (less than 10min)
-In this tutorial we'll install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
+## Miniswarm and Docker Swarm healthchecks tutorial (less than 10min)
+In this tutorial we'll install miniswarm, create a Swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
 
 **Install**
 ```
@@ -41,7 +41,7 @@ INFO: eval $(docker-machine env ms-manager0)
 
 **Visualize your cluster**
 
-This will open a browser with a nice visualization of your docker swarm using [docker-swarm-visualizer](https://github.com/ManoMarks/docker-swarm-visualizer)
+This will open a browser with a nice visualization of your Docker Swarm using [docker-swarm-visualizer](https://github.com/ManoMarks/docker-swarm-visualizer)
 ```
 miniswarm vis
 ```
@@ -50,7 +50,7 @@ miniswarm vis
 
 This service will be unhealthy due to failing [Goss](https://github.com/aelsabbahy/goss) healthchecks and missing dependencies. See next few steps for how we can debug and remedy this.
 ```
-# Connect to your swarm
+# Connect to your cluster
 eval $(docker-machine env ms-manager0)
 
 # Create a network for your service
@@ -121,7 +121,7 @@ miniswarm health vote
 # Open app in browser
 miniswarm service vote
 
-# print url, but don't open
+# print url, but don't open (--url has to be at the end for now)
 miniswarm service vote --url
 ```
 
@@ -139,14 +139,14 @@ miniswarm logs vote -f
 miniswarm scale 2
 ```
 
-**Delete your swarm cluster**
+**Delete your cluster**
 ```
 miniswarm delete
 ```
 
 # FAQ
-## Can this be used to manage a remote swarm?
-The tool was written with local swarm cluster in mind. That said, it can probably be used to manage a remote swarm clusters, but that hasn't been tested. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request to improve this or add more support.
+## Can this be used to manage a remote Swarm cluster?
+The tool was written with local Swarm cluster in mind. That said, it can probably be used to manage a remote Swarm clusters, but that hasn't been tested. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request to improve this or add more support.
 
 ## How do I disable the color output?
 
@@ -161,21 +161,21 @@ miniswarm ...
 ## Does this work on Mac/OSX?
 It should, but I don't own a Mac, so I depend on others to verify it. So.. if something is broke on mac, please submit a pull request.
 
+## Why did you use Goss for healthchecks?
+Mostly shameless self-promotion, and while we're on the topic, check out:
+* [Goss](https://github.com/aelsabbahy/goss) - Project page
+* [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - Using Goss with Docker healthchecks and Kubernetes
+
 ## Why the #$@^%$ is this written in Bash?
 
 Two reasons:
 
 1. I though it was going to be ~100 lines of bash, I was wrong.. very wrong :(.
-2. I want users to be able to look at this script and see all the commands needed to set up a swarm cluster.
-  * Go would be great for this tool, especially by leveraging the docker packages directly, but then the tool will be more of a blackbox to new users
-
-## Why did you use Goss for healthchecks?
-Mostly shameless self-promotion, and while we're on the topic, check out:
-* [Goss](https://github.com/aelsabbahy/goss) - Project page
-* [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - On Using Goss with docker healthchecks and Kubernetes
+2. I want users to be able to look at this script and see all the commands needed to set up a Swarm cluster.
+  * Go would be great for this tool, especially by leveraging the Docker go packages directly, but then the tool will be more of a blackbox to new users
 
 ## I'm getting intermittent network issues, why is this happening?
-Honestly, I don't know.. I see them too. Either I'm doing something dumb, or docker swarm mode has intermittent DNS issues. Hopefully with more users we can get to the bottom of this.
+Honestly, I don't know.. I see them too. Either I'm doing something dumb, or Docker Swarm mode has intermittent DNS issues. Hopefully with more users we can get to the bottom of this.
 
 ## Why is healthyvote not a Docker automated build?
 Because Dockerhub doesn't support HEALTHCHECK in Dockerfile yet. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
