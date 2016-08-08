@@ -88,12 +88,27 @@ missing_instances() {
   comm -23 <(IFS=$'\n'; echo "${wanted_instances[*]}" | sort) <(echo -e "$got_instances" | sort)
 }
 
+# Opens url in browser
 open_url() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     open "$1"
   else
     xdg-open "$1"
   fi
+}
+
+pids=()
+# Waits for multiple pids, checking their return code
+wait_for_pids() {
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+  pids=()
+}
+
+# Add the last pid to our wait queue
+add_last_pid() {
+  pids=( ${pids[@]} $! )
 }
 
 ################
@@ -105,17 +120,20 @@ create_instance() {
 
 # Create missing instances
 create_instances() {
+  #pids=()
   for i in "${missing_instances[@]}"; do
     # If boot2docker.iso doesn't exist, then run fist command serially otherwise we error
     if ! [[ -e ~/.docker/machine/cache/boot2docker.iso ]]; then
       create_instance "$i"
     else
       create_instance "$i" &
+      add_last_pid
+      #pids=( ${pids[@]} $! )
       # Stagger to avoid VirtualBox errors when too many machines are launched in parallel
       sleep 3
     fi
   done
-  wait
+  wait_for_pids
 }
 
 # Check if node in our cluster and in a ready state
@@ -160,8 +178,9 @@ delete_instances() {
   if [[ ${1:-""} != "--force" ]]; then
     for i in "${extra_instances[@]}"; do
       delete_from_cluster "$i" &
+      add_last_pid
     done
-    wait
+    wait_for_pids
   fi
   docker-machine rm -y "${extra_instances[@]}"
 }
@@ -182,8 +201,9 @@ stop_instances() {
       delete_from_cluster "$i" | line_prefix "$i";
       docker-machine stop "$i" | line_prefix "$i";
     } &
+    add_last_pid
   done
-  wait
+  wait_for_pids
   # Kill the leader
   leave_cluster "ms-manager0" | line_prefix "ms-manager0";
   docker-machine stop "ms-manager0" | line_prefix "ms-manager0";
@@ -204,8 +224,9 @@ start_instances() {
   info "Starting: ${to_start[*]}"
   for i in "${to_start[@]}"; do
     start_instance "$i" | line_prefix "$i" &
+    add_last_pid
   done
-  wait
+  wait_for_pids
 }
 
 # Silly check to see if our cluster is initialized
@@ -249,11 +270,13 @@ create_cluster() {
   lookup_and_set_tokens
   for i in "${wanted_managers[@]}"; do
       join_cluster "$i" "$manager_token" &
+      add_last_pid
   done
   for i in "${wanted_workers[@]}"; do
       join_cluster "$i" "$worker_token" &
+      add_last_pid
   done
-  wait
+  wait_for_pids
 }
 
 # Scale cluster to our desired size
@@ -441,8 +464,9 @@ cmd_logs() {
     eval "$(docker-machine env "$node")"
     docker logs $opts "${name}.${id}" 2>&1 | line_prefix "${node} ${name}.${id}"
     ) &
+    add_last_pid
   done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
-  wait
+  wait_for_pids
 }
 
 main() {
