@@ -130,7 +130,7 @@ leave_cluster() {
     docker-machine ssh ms-manager0 docker node update --availability drain "$1" | line_prefix "$1"
     # Give it a few sec to drain
     # FIXME: There's probably a better way to do this
-    sleep 5
+    sleep 3
     info "Leaving cluster: $1"
     docker-machine ssh "$1" docker swarm leave --force 2>&1 | line_prefix "$1"
   fi
