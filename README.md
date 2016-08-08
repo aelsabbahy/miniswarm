@@ -150,7 +150,7 @@ Mostly shameless self-promotion, and while we're on the topic, check out:
 * [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - On Using Goss with docker healthchecks and Kubernetes
 
 ## Why is healthyvote not a Docker automated build?
-Becaause Dockerhub doesn't support HEALTHCHECK in Dockerfile yet :\. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
+Becaause Dockerhub doesn't support HEALTHCHECK in Dockerfile yet. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
 
 ## Why does this suck?
 
