@@ -1,7 +1,7 @@
-# Miniswarm - Local docker swarm in one command
+# Miniswarm - Docker swarm in one command
 
 ## What is Miniswarm?
-Miniswarm is a tool that intends to make creating and managing a local [Docker swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters.
+Miniswarm is a tool that intends to make creating and managing a local [Docker swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters. See FAQ below for inof on managing a remote swarm.
 
 ## Prerequisites
 
@@ -144,6 +144,22 @@ miniswarm delete
 ```
 
 # FAQ
+## Can this be used to manage a remote swarm?
+Probably yes.. but I haven't tested it. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request cleaning up the logic.
+
+## How do I disable the color output?
+
+```
+MS_NOCOLOR=1 miniswarm ..
+
+# or
+export MS_NOCOLOR=1
+miniswarm ...
+```
+
+## Does this work on Mac/OSX?
+It should, but I don't own a Mac, so I depend on others to verify it. So.. if something is broke on mac, please submit a pull request.
+
 ## Why the #$@^%$ is this written in Bash?
 
 Two reasons:
@@ -162,20 +178,6 @@ Honestly, I don't know.. I see them too. Either I'm doing something dumb, or doc
 
 ## Why is healthyvote not a Docker automated build?
 Because Dockerhub doesn't support HEALTHCHECK in Dockerfile yet. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
-
-## How do I disable the color output?
-
-```
-MS_NOCOLOR=1 miniswarm ..
-
-# or
-export MS_NOCOLOR=1
-miniswarm ...
-```
-
-## Does this work on Mac/OSX?
-It should, but I don't own a Mac, so I depend on others to verify it. So.. if something is broke on mac, please submit a pull request.
-
 
 ## Why does this suck?
 
