@@ -104,8 +104,9 @@ docker service create --replicas 1 --network healthyvote_net --name redis redis
 
 # Wait for it to show up in `miniswarm vis` or by using CLI
 docker service ls
+docker service ps redis
 
-# Now that redis is deployed, lets if our vote service is running
+# Now that redis is deployed, the  vote service should now be running
 docker service ls
 
 # And the health..
@@ -126,7 +127,7 @@ miniswarm service vote --url
 miniswarm logs vote
 
 # Tail the log file (-f has to be at the end for now)
-miniswarm logs redis -f
+miniswarm logs vote -f
 ```
 
 **Delete our swarm cluster**
@@ -147,6 +148,9 @@ Two reasons:
 Mostly shameless self-promotion, and while we're on the topic, check out:
 * [Goss](https://github.com/aelsabbahy/goss) - Project page
 * [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - On Using Goss with docker healthchecks and Kubernetes
+
+## Why is healthyvote not a Docker automated build?
+Becaause Dockerhub doesn't support HEALTHCHECK in Dockerfile yet :\. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
 
 ## Why does this suck?
 
