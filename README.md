@@ -58,7 +58,7 @@ This service will be unhealthy due to failing [Goss](https://github.com/aelsabba
 eval $(docker-machine env ms-manager0)
 
 # Create a network for your service
-docker network create healthyvote_net -d overlay
+docker network create -d overlay healthyvote_net
 
 # Ensure network is set to driver=overlay, scope=swarm
 docker network ls
