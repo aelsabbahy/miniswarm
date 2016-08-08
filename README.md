@@ -14,7 +14,8 @@ I like to learn by doing, hopefully you do too. Lets install miniswarm, deploy o
 
 **install**
 ```
-curl -sL miniswarm_url -o /usr/local/bin/miniswarm && chmod +rx /usr/local/bin/miniswarm
+curl -sL https://raw.githubusercontent.com/aelsabbahy/miniswarm/master/miniswarm -o /usr/local/bin/miniswarm
+chmod +rx /usr/local/bin/miniswarm
 ```
 
 **start a cluster** - Pick your desired size
