@@ -10,7 +10,7 @@ The tool takes less than 10 minutes to learn, see the tutorial section below, or
 
 * Docker >= 1.12
 * docker-machine >= 0.7.0
-* Virtualbox
+* VirtualBox - Needed for local cluster, see FAQ for remote clusters
 
 ## Miniswarm and Docker swarm healthchecks tutorial (less than 10min)
 In this tutorial we'll install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
@@ -146,7 +146,7 @@ miniswarm delete
 
 # FAQ
 ## Can this be used to manage a remote swarm?
-Probably yes.. but I haven't tested it. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request cleaning up the logic.
+The tool was written with local swarm cluster in mind. That said, it can probably be used to manage a remote swarm clusters, but that hasn't been tested. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request to improve this or add more support.
 
 ## How do I disable the color output?
 
