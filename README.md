@@ -43,20 +43,20 @@ This will open a browser with a nice visualization of your docker swarm using [d
 miniswarm vis
 ```
 
-**Deploy our first service - This will initially be failing to showcase healtchecks**
+**Deploy your first service - This will initially be failing to showcase healtchecks**
 
 This service will be unhealthy due to failing [Goss](https://github.com/aelsabbahy/goss) healthchecks and missing dependencies. See next few steps for how we can debug and remedy this.
 ```
-# Connect to our swarm
+# Connect to your swarm
 eval $(docker-machine env ms-manager0)
 
-# Create a network for our service
+# Create a network for your service
 docker network create healthyvote_net -d overlay
 
 # Ensure network is set to driver=overlay, scope=swarm
 docker network ls
 
-# Create our first service
+# Create your first service
 docker service create -p 8080:80 --replicas 2 --network healthyvote_net --name vote aelsabbahy/healthyvote
 ```
 
@@ -130,13 +130,13 @@ miniswarm logs vote
 miniswarm logs vote -f
 ```
 
-**Scale down our cluster**
+**Scale down your cluster**
 ```
 # Take a look at `miniswarm vis` GUI to see the services move around as we scale down
 miniswarm scale 2
 ```
 
-**Delete our swarm cluster**
+**Delete your swarm cluster**
 ```
 miniswarm delete
 ```
