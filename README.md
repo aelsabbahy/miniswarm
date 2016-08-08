@@ -9,8 +9,8 @@ Miniswarm is a tool that intends to make creating a [Docker swarm](https://docs.
 * docker-machine >= 0.7.0
 * Virtualbox
 
-## Miniswarm and docker swarm healthchecks tutorial
-I like to learn by doing, hopefully you do too. Lets install miniswarm, deploy our swarm cluster and some apps.
+## Miniswarm and Docker swarm healthchecks tutorial
+I like to learn by doing, hopefully you do too. Lets install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
 
 **install**
 ```
