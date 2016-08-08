@@ -14,6 +14,7 @@ I like to learn by doing, hopefully you do too. Lets install miniswarm, create a
 
 **install**
 ```
+# As root
 curl -sSL https://raw.githubusercontent.com/aelsabbahy/miniswarm/master/miniswarm -o /usr/local/bin/miniswarm
 chmod +rx /usr/local/bin/miniswarm
 ```
