@@ -43,7 +43,7 @@ This will open a browser with a nice visualization of your docker swarm using [d
 miniswarm vis
 ```
 
-**Deploy our first service - this will initially be failing to showcase healtchecks**
+**Deploy our first service - This will initially be failing to showcase healtchecks**
 
 This service will be unhealthy due to failing [Goss](https://github.com/aelsabbahy/goss) healthchecks and missing dependencies. See next few steps for how we can debug and remedy this.
 ```

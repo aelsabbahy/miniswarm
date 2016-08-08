@@ -5,12 +5,21 @@ set -e
 ###################
 # Output formatting
 ###################
+DEF_COLOR=""
+GREEN=""
+RED=""
+if ! [[ ${MS_NO_COLOR:-""} ]]; then
+  DEF_COLOR="\x1b[0m"
+  GREEN="\x1b[32;01m"
+  RED="\x1b[31;01m"
+fi
+
 info() {
-  echo "INFO: $*"
+  echo -e "${GREEN}INFO: ${*}${DEF_COLOR}"
 }
 
 err() {
-  echo "ERROR: $*"
+  echo -e "${RED}ERROR: ${*}${DEF_COLOR}"
 }
 
 line_prefix() {
