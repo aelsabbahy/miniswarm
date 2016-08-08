@@ -62,7 +62,7 @@ docker service create -p 8080:80 --replicas 2 --network healthyvote_net --name v
 
 **Inspect the service health**
 ```
-# This should show the service not running
+# Wait for the service to finish preparing, but it won't ever be ready due to failing health
 docker service ls
 docker service ps vote
 
