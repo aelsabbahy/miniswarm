@@ -12,14 +12,14 @@ Miniswarm is a tool that intends to make creating a local [Docker swarm](https:/
 ## Miniswarm and Docker swarm healthchecks tutorial (less than 10min)
 I like to learn by doing, hopefully you do too. Lets install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
 
-**install**
+**Install**
 ```
 # As root
 curl -sSL https://raw.githubusercontent.com/aelsabbahy/miniswarm/master/miniswarm -o /usr/local/bin/miniswarm
 chmod +rx /usr/local/bin/miniswarm
 ```
 
-**start a cluster** - Pick your desired size
+**Start a cluster - Pick your desired size**
 ```
 # 1 manger 2 workers
 miniswarm start 3
@@ -36,7 +36,7 @@ INFO: Stack starup complete. To connect to your stack, run the following command
 INFO: eval $(docker-machine env ms-manager0)
 ```
 
-**visualize your cluster**
+**Visualize your cluster**
 
 This will open a browser with a nice visualization of your docker swarm using [docker-swarm-visualizer](https://github.com/ManoMarks/docker-swarm-visualizer)
 ```
@@ -155,8 +155,25 @@ Mostly shameless self-promotion, and while we're on the topic, check out:
 * [Goss](https://github.com/aelsabbahy/goss) - Project page
 * [blog post](https://medium.com/@aelsabbahy/docker-1-12-kubernetes-simplified-health-checks-and-container-ordering-with-goss-fa8debbe676c) - On Using Goss with docker healthchecks and Kubernetes
 
+## I'm getting intermittent network issues, why is this happening?
+Honestly, I don't know.. I see them too. Either I'm doing something dumb, or docker swarm mode has intermittent DNS issues. Hopefully with more users we can get to the bottom of this.
+
 ## Why is healthyvote not a Docker automated build?
-Becaause Dockerhub doesn't support HEALTHCHECK in Dockerfile yet. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
+Because Dockerhub doesn't support HEALTHCHECK in Dockerfile yet. The code for this image can be found in the [healthyvote/](https://github.com/aelsabbahy/miniswarm/tree/master/healthyvote) folder.
+
+## How do I disable the color output?
+
+```
+MS_NOCOLOR=1 miniswarm ..
+
+# or
+export MS_NOCOLOR=1
+miniswarm ...
+```
+
+## Does this work on Mac/OSX?
+It should, but I don't own a Mac, so I depend on others to verify it. So.. if something is broke on mac, please submit a pull request.
+
 
 ## Why does this suck?
 
