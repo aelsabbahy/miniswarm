@@ -1,7 +1,7 @@
 # Miniswarm - Local docker swarm in one command
 
 ## What is Miniswarm?
-Miniswarm is a tool that intends to make creating a local [Docker swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters.
+Miniswarm is a tool that intends to make creating and managing a local [Docker swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters.
 
 ## Prerequisites
 
@@ -10,7 +10,9 @@ Miniswarm is a tool that intends to make creating a local [Docker swarm](https:/
 * Virtualbox
 
 ## Miniswarm and Docker swarm healthchecks tutorial (less than 10min)
-I like to learn by doing, hopefully you do too. Lets install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
+In this tutorial we'll install miniswarm, create a swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
+
+If you prefer a video, I've posted a video of this tutorial here: https://youtu.be/in1ItGKDr98
 
 **Install**
 ```

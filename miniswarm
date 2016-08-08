@@ -495,7 +495,7 @@ main() {
     logs)
       cmd_logs "${@:2}"
       ;;
-    ""|help)
+    ""|help|-h)
       print_help
       ;;
     *)
