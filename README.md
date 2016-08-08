@@ -21,13 +21,13 @@ chmod +rx /usr/local/bin/miniswarm
 
 **Start a cluster - Pick your desired size**
 ```
-# 1 manger 2 workers
+# 1 manager 2 workers
 miniswarm start 3
 
 # 1 manager cluster - if you want a smaller cluster
 miniswarm start
 
-# 2 mangers 3 workers - nice laptop or desktop :)
+# 2 managers 3 workers - nice laptop or desktop :)
 miniswarm start 2 3
 ```
 A couple of minutes later, you should get this message
