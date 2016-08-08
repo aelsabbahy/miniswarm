@@ -1,4 +1,8 @@
 # Miniswarm - Docker Swarm cluster in one command
+Social Media:
+* [![Twitter Follow](https://img.shields.io/twitter/follow/aelsabbahy1.svg?style=social&label=Follow&maxAge=2592000)]() - Stay updated on new releases
+* [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&maxAge=2592000)](https://twitter.com/intent/tweet?text=Check%20out%20Miniswarm%3A%20Docker%20Swarm%20cluster%20in%20one%20command%20https%3A%2F%2Fgithub.com%2Faelsabbahy%2Fminiswarm%20%23devops%20%23docker) - If you like miniswarm, spread the word!
+* [Blog](https://medium.com/@aelsabbahy) - See what I'm ranting about
 
 ## What is Miniswarm?
 Miniswarm is a tool that intends to make creating and managing a local [Docker Swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters. See FAQ below for info on managing a remote Swarm cluster.
