@@ -43,7 +43,7 @@ This will open a browser with a nice visualization of your docker swarm using [d
 miniswarm vis
 ```
 
-**Deploy our first service**
+**Deploy our first service - this will initially be failing to showcase healtchecks**
 
 This service will be unhealthy due to failing [Goss](https://github.com/aelsabbahy/goss) healthchecks and missing dependencies. See next few steps for how we can debug and remedy this.
 ```
@@ -128,6 +128,12 @@ miniswarm logs vote
 
 # Tail the log file (-f has to be at the end for now)
 miniswarm logs vote -f
+```
+
+**Scale down our cluster**
+```
+# Take a look at `miniswarm vis` GUI to see the services move around as we scale down
+miniswarm scale 2
 ```
 
 **Delete our swarm cluster**
