@@ -300,11 +300,22 @@ scale_cluster() {
   create_cluster
 }
 
+# You shall not pass if you're not connected to a swarm
+fail_if_not_connected_to_swarm() {
+  if ! docker node ls > /dev/null 2>&1; then
+    err "Not connected to a swarm cluster, please configure the environment and try again, example:"
+    err 'eval $(docker-machine env MANAGER_NODE)'
+    exit 1
+  fi
+  info "Connected to manager: $DOCKER_MACHINE_NAME"
+}
+
 # Deploy swarm visualizer, because it's awesome
 deploy_swarm_visualizer() {
-  lookup_and_set_manager_ip
+  fail_if_not_connected_to_swarm
+  manager_ip=$(docker-machine ip "$DOCKER_MACHINE_NAME")
   (
-  eval "$(docker-machine env ms-manager0)"
+  #eval "$(docker-machine env ms-manager0)"
   if [[ $(docker ps -qa -f 'Status=running' -f Name='swarm_visualizer') ]]; then
     return 0
   fi
@@ -431,9 +442,10 @@ cmd_delete() {
 }
 
 cmd_service() {
-  lookup_and_set_manager_ip
+  fail_if_not_connected_to_swarm
+  manager_ip=$(docker-machine ip "$DOCKER_MACHINE_NAME")
   (
-  eval "$(docker-machine env ms-manager0)"
+  #eval "$(docker-machine env ms-manager0)"
   port=$(docker service inspect --format '{{(index .Endpoint.Ports 0).PublishedPort}}' "$1")
   url="http://${manager_ip}:${port}"
   if [[ ${2:-""} == "--url" ]]; then
@@ -447,6 +459,7 @@ cmd_service() {
 
 # View healthchecks of service
 cmd_health() {
+  fail_if_not_connected_to_swarm
   while read line; do
     if [[ $2 != "-a" ]]; then
       grep -q 'Running' <<<$line || continue
@@ -459,11 +472,12 @@ cmd_health() {
     eval "$(docker-machine env "$node")"
     docker inspect -f '{{ range .State.Health.Log }}{{ println "======\nStart:" .Start "\n======"}}{{ .Output }}{{end}}' "${name}.${id}" | line_prefix "${node} ${name}.${id}"
     )
-  done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
+  done < <(docker service ps "$1" | tail -n +2)
 }
 
 # View logs of service
 cmd_logs() {
+  fail_if_not_connected_to_swarm
   while read line; do
     node=$(grep -o 'ms-[^0-9][^0-9]*[0-9]*' <<<$line || true)
     name=$(grep -o "$1\.[0-9][0-9]*" <<<$line || true)
@@ -475,7 +489,7 @@ cmd_logs() {
     docker logs $opts "${name}.${id}" 2>&1 | line_prefix "${node} ${name}.${id}"
     ) &
     add_last_pid
-  done < <(docker-machine ssh ms-manager0 docker service ps "$1" | tail -n +2)
+  done < <(docker service ps "$1" | tail -n +2)
   wait_for_pids
 }
 
