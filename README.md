@@ -4,6 +4,16 @@ Social Media:
 * [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&maxAge=2592000)](https://twitter.com/intent/tweet?text=Check%20out%20Miniswarm%3A%20Docker%20Swarm%20cluster%20in%20one%20command%20https%3A%2F%2Fgithub.com%2Faelsabbahy%2Fminiswarm%20%23devops%20%23docker) - If you like miniswarm, spread the word!
 * [Blog](https://medium.com/@aelsabbahy) - See what I'm ranting about
 
+## One command?
+Yup, creating a 3 node cluster is simply:
+```
+miniswarm start 3
+```
+When you're done:
+```
+miniswarm delete
+```
+
 ## What is Miniswarm?
 Miniswarm is a tool that intends to make creating and managing a local [Docker Swarm](https://docs.docker.com/engine/swarm/) cluster as easy as possible. Miniswarm was inspired by [Minikube](https://github.com/kubernetes/minikube) which does a similar thing for kubernetes clusters. See FAQ below for info on managing a remote Swarm cluster.
 
@@ -19,14 +29,14 @@ The tool takes less than 10 minutes to learn, see the tutorial section below, or
 ## Miniswarm and Docker Swarm healthchecks tutorial (less than 10min)
 In this tutorial we'll install miniswarm, create a Swarm cluster, deploy some apps and learn all the features of miniswarm in the process.
 
-**Install**
+#### Install
 ```
 # As root
 curl -sSL https://raw.githubusercontent.com/aelsabbahy/miniswarm/master/miniswarm -o /usr/local/bin/miniswarm
 chmod +rx /usr/local/bin/miniswarm
 ```
 
-**Start a cluster - Pick your desired size**
+#### Start a cluster - Pick your desired size
 ```
 # 1 manager 2 workers
 miniswarm start 3
@@ -43,14 +53,14 @@ INFO: Stack starup complete. To connect to your stack, run the following command
 INFO: eval $(docker-machine env ms-manager0)
 ```
 
-**Visualize your cluster**
+#### Visualize your cluster
 
 This will open a browser with a nice visualization of your Docker Swarm using [docker-swarm-visualizer](https://github.com/ManoMarks/docker-swarm-visualizer)
 ```
 miniswarm vis
 ```
 
-**Deploy your first service - This will initially be failing to showcase healtchecks**
+#### Deploy your first service - This will initially be failing to showcase healtchecks
 
 This service will be unhealthy due to failing [Goss](https://github.com/aelsabbahy/goss) healthchecks and missing dependencies. See next few steps for how we can debug and remedy this.
 ```
@@ -67,7 +77,7 @@ docker network ls
 docker service create -p 8080:80 --replicas 2 --network healthyvote_net --name vote aelsabbahy/healthyvote
 ```
 
-**Inspect the service health**
+#### Inspect the service health
 ```
 # Wait for the service to finish preparing, but it won't ever be ready due to failing health
 docker service ls
@@ -102,7 +112,7 @@ We should see something like this:
 [ms-worker0 vote.2.630mookf9pnc8dip5hl7yng3q] Count: 2, Failed: 1, Skipped: 0
 ```
 
-**Deploy missing dependencies**
+#### Deploy missing dependencies
 
 Lets remedy the healthcheck issue
 
@@ -120,7 +130,7 @@ docker service ls
 miniswarm health vote
 ```
 
-**Open service in browser**
+#### Open service in browser
 ```
 # Open app in browser
 miniswarm service vote
@@ -129,7 +139,7 @@ miniswarm service vote
 miniswarm service vote --url
 ```
 
-**View the logs**
+#### View the logs
 ```
 miniswarm logs vote
 
@@ -137,13 +147,13 @@ miniswarm logs vote
 miniswarm logs vote -f
 ```
 
-**Scale down your cluster**
+#### Scale down your cluster
 ```
 # Take a look at `miniswarm vis` GUI to see the services move around as we scale down
 miniswarm scale 2
 ```
 
-**Delete your cluster**
+#### Delete your cluster
 ```
 miniswarm delete
 ```
