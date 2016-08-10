@@ -464,9 +464,9 @@ cmd_health() {
     if [[ $2 != "-a" ]]; then
       grep -q 'Running' <<<$line || continue
     fi
-    node=$(sed -e 's/^[^ ]*[ _]*[^ ]* [^ ]* *\([^ ]*\).*/\1/' <<<$line || tue)
-    name=$(sed -e 's/^[^ ]*[ _]*\([^ ]*\).*/\1/' <<<$line || tue)
-    id=$(sed -e 's/^\([^ ]*\).*/\1/' <<<$line || tue)
+    node=$(sed -e 's/^[^ ]*[ _]*[^ ]* [^ ]* *\([^ ]*\).*/\1/' <<<$line)
+    name=$(sed -e 's/^[^ ]*[ _]*\([^ ]*\).*/\1/' <<<$line)
+    id=$(sed -e 's/^\([^ ]*\).*/\1/' <<<$line)
     (
     # docker-machine ssh doesn't like the quotes in docker inspect -f
     eval "$(docker-machine env "$node")"
@@ -479,9 +479,9 @@ cmd_health() {
 cmd_logs() {
   fail_if_not_connected_to_swarm
   while read line; do
-    node=$(sed -e 's/^[^ ]*[ _]*[^ ]* [^ ]* *\([^ ]*\).*/\1/' <<<$line || tue)
-    name=$(sed -e 's/^[^ ]*[ _]*\([^ ]*\).*/\1/' <<<$line || tue)
-    id=$(sed -e 's/^\([^ ]*\).*/\1/' <<<$line || tue)
+    node=$(sed -e 's/^[^ ]*[ _]*[^ ]* [^ ]* *\([^ ]*\).*/\1/' <<<$line)
+    name=$(sed -e 's/^[^ ]*[ _]*\([^ ]*\).*/\1/' <<<$line)
+    id=$(sed -e 's/^\([^ ]*\).*/\1/' <<<$line)
     [[ $2 == "-f" ]] && opts="-f"
     (
     # docker-machine ssh doesn't like the quotes in docker inspect -f
