@@ -1,8 +1,4 @@
 # Miniswarm - Docker Swarm cluster in one command
-Social Media:
-* [![Twitter Follow](https://img.shields.io/twitter/follow/aelsabbahy1.svg?style=social&label=Follow&maxAge=2592000)]() - Stay updated on new releases
-* [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&maxAge=2592000)](https://twitter.com/intent/tweet?text=Check%20out%20Miniswarm%3A%20Docker%20Swarm%20cluster%20in%20one%20command%20https%3A%2F%2Fgithub.com%2Faelsabbahy%2Fminiswarm%20%23devops%20%23docker) - If you like miniswarm, spread the word!
-* [Blog](https://medium.com/@aelsabbahy) - See what I'm ranting about
 
 ## One command?
 Yup, creating a 3 node cluster is simply:
@@ -160,7 +156,10 @@ miniswarm delete
 
 # FAQ
 ## Can this be used to manage a remote Swarm cluster?
-The tool was written with local Swarm cluster in mind. That said, it can probably be used to manage a remote Swarm clusters, but that hasn't been tested. Take a look at MS_CREATE variable at the top of the script. Feel free to submit a pull-request to improve this or add more support.
+The tool was written with local Swarm cluster in mind. That said, it can probably be used to manage a remote Swarm clusters, but that hasn't been tested. Take a look at MACHINE_DRIVER variable at the top of the script.
+
+In theory, if you set the MACHINE_DRIVER variable to the driver you want + any required variables from the driver itself, see [supported drivers](https://docs.docker.com/machine/drivers/) it should just work. Feel free to submit a pull-request to improve this or add more support.
+
 
 ## How do I disable the color output?
 
@@ -205,3 +204,9 @@ Open an issue, create a pull request.. contribute! :)
 ## Why is the CLI parsing so bad?
 
 See the last two questions.
+
+## Social Media:
+* [![Twitter Follow](https://img.shields.io/twitter/follow/aelsabbahy1.svg?style=social&label=Follow&maxAge=2592000)]() - Stay updated on new releases
+* [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&maxAge=2592000)](https://twitter.com/intent/tweet?text=Check%20out%20Miniswarm%3A%20Docker%20Swarm%20cluster%20in%20one%20command%20https%3A%2F%2Fgithub.com%2Faelsabbahy%2Fminiswarm%20%23devops%20%23docker) - If you like miniswarm, spread the word!
+* [Blog](https://medium.com/@aelsabbahy) - See what I'm ranting about
+

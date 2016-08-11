@@ -8,9 +8,8 @@ set -e
 #############
 # Set this to any value to disable colors
 MS_NOCOLOR=""
-# Override the docker_machine command
-MS_CREATE_DEFAULT='docker-machine create -d virtualbox'
-MS_CREATE=${MS_CREATE:-$MS_CREATE_DEFAULT}
+# Default docker-machine driver
+export MACHINE_DRIVER=${MACHINE_DRIVER:-"virtualbox"}
 
 ###################
 # Output formatting
@@ -125,7 +124,7 @@ add_last_pid() {
 # Docker helpers
 ################
 create_instance() {
-  $MS_CREATE "$1" 2>&1 | line_prefix "$1"
+  docker-machine create "$1" 2>&1 | line_prefix "$1"
 }
 
 # Create missing instances
