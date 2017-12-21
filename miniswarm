@@ -321,10 +321,10 @@ deploy_swarm_visualizer() {
   if [[ $(docker ps -qa -f 'Status=exited' -f Name='swarm_visualizer') ]]; then
     docker rm -vf swarm_visualizer > /dev/null
   fi
-  docker run -it -d --name swarm_visualizer -p 5000:5000 -e HOST="$manager_ip" -e PORT=5000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
+  docker run -it -d --name swarm_visualizer -p 8080:8080 -e HOST="$manager_ip" -e PORT=8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
   )
   # Wait for it to come up
-  wait_for_command "curl -s http://${manager_ip}:5000 -o /dev/null"
+  wait_for_command "curl -s http://${manager_ip}:8080 -o /dev/null"
 }
 
 # Remove all services
@@ -386,7 +386,7 @@ cmd_start() {
 # Run the visualizer
 cmd_vis() {
   deploy_swarm_visualizer
-  url="http://${manager_ip}:5000"
+  url="http://${manager_ip}:8080"
   if [[ ${1:-""} == "--url" ]]; then
     echo "$url"
   else
